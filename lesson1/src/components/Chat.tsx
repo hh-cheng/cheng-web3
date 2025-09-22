@@ -58,11 +58,48 @@ export default function Chat() {
     setInput('')
     setIsThinking(true)
 
-    await new Promise((r) => setTimeout(r, 700))
-    const reply = `You said: "${userMessage.content}". Here's a fun fact: space is big!\n\n(Replace this with a real API call later.)`
-    const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', content: reply }
-    setMessages((prev) => [...prev, assistantMessage])
-    setIsThinking(false)
+    const WORKER_BASE = 'https://ai-chat.bonelycheng.workers.dev'
+    const tryCall = async (path: string) => {
+      const body = {
+        model: 'Qwen/QwQ-32B',
+        messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+        stream: false,
+      }
+      const res = await fetch(`${WORKER_BASE}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      return res
+    }
+
+    try {
+      let res = await tryCall('/api/chat')
+      if (res.status === 404) {
+        // Some deployments may mount chat at root
+        res = await tryCall('')
+      }
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(`HTTP ${res.status}: ${text}`)
+      }
+      const data = await res.json()
+      const content =
+        data?.choices?.[0]?.message?.content ??
+        data?.choices?.[0]?.delta?.content ??
+        'No content returned.'
+      const assistantMessage: Message = { id: crypto.randomUUID(), role: 'assistant', content }
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (err: any) {
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: `Error contacting AI: ${err?.message || String(err)}`,
+      }
+      setMessages((prev) => [...prev, assistantMessage])
+    } finally {
+      setIsThinking(false)
+    }
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -1,4 +1,46 @@
 # React + TypeScript + Vite
+## Cloudflare Worker proxy to SiliconFlow
+
+This app can call a Cloudflare Worker at `/api/chat` that proxies to SiliconFlow Chat Completions.
+
+### Setup
+
+1. Install wrangler (if needed): `pnpm add -g wrangler`
+2. Go to `lesson1/worker` and set your key: `wrangler secret put SILICONFLOW_API_KEY`
+3. Optionally set allowed origins: in `wrangler.toml` set `ALLOWED_ORIGINS = "http://localhost:5173"`.
+4. Dev the worker: `wrangler dev` (runs on `http://127.0.0.1:8787`).
+
+### Request shape
+
+POST `/api/chat`
+
+Body mirrors SiliconFlow API with at least `model` and `messages`:
+
+```json
+{
+  "model": "Qwen/QwQ-32B",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ],
+  "stream": false
+}
+```
+
+### Frontend example
+
+```ts
+await fetch("/api/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: "Qwen/QwQ-32B",
+    messages: [
+      { role: "user", content: "Say hi" }
+    ]
+  })
+})
+```
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
