@@ -1,7 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
-import { LibSQLStore } from '@mastra/libsql';
+import { CloudflareStore } from '@mastra/cloudflare';
 import { weatherTool } from '../tools/weather-tool';
 
 const model = createOpenAI({
@@ -28,8 +28,11 @@ export const weatherAgent = new Agent({
   model: model.languageModel('Pro/deepseek-ai/DeepSeek-V3.1'),
   tools: { weatherTool },
   memory: new Memory({
-    storage: new LibSQLStore({
-      url: 'file:../mastra.db', // path is relative to the .mastra/output directory
+    storage: new CloudflareStore({
+      accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+      apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+      namespacePrefix: 'lesson2_',
+      keyPrefix: 'prod_',
     }),
   }),
 });

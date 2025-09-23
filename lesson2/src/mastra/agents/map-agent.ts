@@ -1,9 +1,9 @@
 import { Memory } from '@mastra/memory';
 import { Agent } from '@mastra/core/agent';
-import { LibSQLStore } from '@mastra/libsql';
+import { CloudflareStore } from '@mastra/cloudflare';
 import { createOpenAI } from '@ai-sdk/openai';
 
-import { mapMcpServer } from '../mcp/map-mcp-server';
+import { amapTools } from '../tools/amap-tools';
 
 const model = createOpenAI({
   baseURL: 'https://api.siliconflow.cn',
@@ -39,10 +39,13 @@ export const mapAgent = new Agent({
       Use the map tools provided by the AMap MCP server (amap-maps) and choose the most appropriate tool for the task. Do not invent data you didn't fetch.
 `,
   model: model.languageModel('Pro/deepseek-ai/DeepSeek-V3.1'),
-  tools: await mapMcpServer.getTools(),
+  tools: amapTools,
   memory: new Memory({
-    storage: new LibSQLStore({
-      url: 'file:../mastra.db', // path is relative to the .mastra/output directory
+    storage: new CloudflareStore({
+      accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+      apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+      namespacePrefix: 'lesson2_',
+      keyPrefix: 'prod_',
     }),
   }),
 });
