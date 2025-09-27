@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hello DApp</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #0f172a;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #6366f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Inter,
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          'Noto Sans';
+        color: var(--text);
+        background: linear-gradient(180deg, #0a1020, #0c1224 55%, #0a1020);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 24px;
+        background: rgba(17, 24, 39, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+      .note {
+        color: var(--muted);
+      }
+      .section {
+        margin: 20px 0;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      input {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #0b1220;
+        color: var(--text);
+        min-width: 220px;
+        outline: none;
+      }
+      button {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          transform 0.05s ease,
+          opacity 0.2s,
+          box-shadow 0.2s;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+      }
+      button.secondary {
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.16);
+        color: var(--text);
+      }
+      button:hover {
+        opacity: 0.95;
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      pre.inline {
+        white-space: pre-wrap;
+        background: #0b1220;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 8px 10px;
+        border-radius: 8px;
+        margin-top: 8px;
+      }
+      ul#events-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+      }
+      ul#events-list li {
+        padding: 8px 10px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          'Liberation Mono', 'Courier New', monospace;
+      }
+      hr {
+        border: none;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" class="container">
+      <h1>Hello DApp</h1>
+      <div class="note">Interact with your HelloContract on Ganache.</div>
+
+      <div class="section">
+        <!-- Wallet and Network Info -->
+        <div class="row">
+          <button id="btn-connect" class="secondary">Connect Wallet</button>
+        </div>
+        <pre id="wallet-info" class="inline"></pre>
+        <div class="row" style="margin-top: 8px">
+          <input id="input-contract" placeholder="0x... contract address" />
+          <button id="btn-set-contract" class="secondary">
+            Set Contract Address
+          </button>
+        </div>
+      </div>
+
+      <div class="section">
+        <!-- Read Contract State -->
+        <div class="row">
+          <button id="btn-get-info" class="secondary">Get Info</button>
+          <button id="btn-say-hi">Say Hi</button>
+        </div>
+        <pre id="read-result" class="inline"></pre>
+      </div>
+
+      <div class="section">
+        <!-- Write Contract State -->
+        <div class="row">
+          <input id="input-name" placeholder="name" />
+          <input id="input-age" type="number" placeholder="age" />
+          <button id="btn-set-info">Set Info</button>
+        </div>
+        <pre id="write-result" class="inline"></pre>
+      </div>
+
+      <div class="section">
+        <!-- Events -->
+        <div class="row">
+          <button id="btn-query-events" class="secondary">
+            Query History Events
+          </button>
+        </div>
+        <ul id="events-list"></ul>
+      </div>
+    </div>
+
+    <script
+      type="module"
+      src="../node_modules/ethers/dist/ethers.umd.js"
+    ></script>
+    <script>
+      let provider, signer, contract, contractWithSigner
+      let contractAddress, contractABI
+
+      const $ = (id) => document.getElementById(id)
+
+      function formatEtherCompat(value) {
+        try {
+          if (ethers.formatEther) return ethers.formatEther(value)
+          return ethers.utils.formatEther(value)
+        } catch (e) {
+          return String(value)
+        }
+      }
+
+      function isAddressCompat(addr) {
+        try {
+          if (ethers.isAddress) return ethers.isAddress(addr)
+          return ethers.utils.isAddress(addr)
+        } catch (e) {
+          return false
+        }
+      }
+
+      async function updateWalletInfo() {
+        if (!provider || !signer) return
+        const network = await provider.getNetwork()
+        const address = await signer.getAddress()
+        let balance = '0'
+        try {
+          const bal = await provider.getBalance(address)
+          balance = formatEtherCompat(bal)
+        } catch {}
+        const addrText = contractAddress ? contractAddress : '(not set)'
+        $('wallet-info').innerText =
+          `Address: ${address}\nChain: ${network.name} (${network.chainId})\nBalance: ${balance} ETH\nContract: ${addrText}`
+      }
+
+      async function loadArtifacts() {
+        // Load Truffle artifact built JSON to get ABI and deployed address
+        // Adjust path if your server serves files differently
+        const res = await fetch('../build/contracts/HelloContract.json')
+        if (!res.ok) throw new Error('Failed to load contract artifacts')
+        const artifact = await res.json()
+        contractABI = artifact.abi
+
+        // Try to infer address from known networks (Ganache: 5777)
+        const networks = artifact.networks || {}
+        const possible =
+          networks['5777'] || networks['1337'] || networks['31337']
+        if (possible && possible.address) contractAddress = possible.address
+      }
+
+      // 连接钱包
+      async function connectWallet() {
+        try {
+          if (typeof window.ethereum === 'undefined') {
+            window.alert('Failed to initilize ethers')
+            return
+          }
+
+          await window.ethereum.request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }],
+          })
+          // 请求账户访问
+          await window.ethereum.request({
+            method: 'eth_requestAccounts',
+          })
+
+          // 兼容 ethers v5/v6
+          if (ethers.BrowserProvider) {
+            provider = new ethers.BrowserProvider(window.ethereum)
+            signer = await provider.getSigner()
+          } else {
+            provider = new ethers.providers.Web3Provider(window.ethereum)
+            signer = provider.getSigner()
+          }
+
+          // 加载 ABI/地址（如果地址未确定，稍后在网络确定后再补）
+          await loadArtifacts()
+
+          // 创建合约实例（优先使用 artifact 地址；否则尝试按当前网络查找）
+          if (!contractAddress) {
+            // 如果 artifacts 里没有找到地址，尝试从当前网络 id 获取
+            const network = await (provider.getNetwork
+              ? provider.getNetwork()
+              : provider._network())
+            const res = await fetch('../build/contracts/HelloContract.json')
+            const artifact = await res.json()
+            const networks = artifact.networks || {}
+            const netId = String(
+              network.chainId ||
+                (network.chainId && network.chainId.toString()),
+            )
+            if (networks[netId] && networks[netId].address) {
+              contractAddress = networks[netId].address
+            }
+          }
+
+          // 只有当地址存在时才实例化合约
+          if (contractAddress) {
+            contract = new ethers.Contract(
+              contractAddress,
+              contractABI,
+              provider,
+            )
+            contractWithSigner = contract.connect(signer)
+          } else {
+            contract = undefined
+            contractWithSigner = undefined
+          }
+
+          // 更新账户信息
+          await updateWalletInfo()
+
+          // 响应账户与网络变更
+          if (window.ethereum && window.ethereum.on) {
+            window.ethereum.on('accountsChanged', updateWalletInfo)
+            window.ethereum.on('chainChanged', () => window.location.reload())
+          }
+        } catch (err) {
+          console.error(err)
+        }
+      }
+
+      // 查询历史事件
+      async function queryHistoryEvents() {
+        try {
+          if (!contract || !contractAddress)
+            throw new Error('Please connect wallet and set contract address')
+          const filter = contract.filters.Instructor()
+          const events = await contract.queryFilter(filter, 0, 'latest')
+
+          if (!events.length) {
+            $('events-list').innerHTML = '<li>No events found</li>'
+            return
+          }
+
+          // 按时间倒序显示历史事件
+          const items = events
+            .reverse()
+            .map((ev) => {
+              const { name, age } = ev.args || {}
+              const blockNumber = ev.blockNumber
+              return `<li>[#${blockNumber}] Instructor(name=${name}, age=${age})</li>`
+            })
+            .join('')
+          $('events-list').innerHTML = items
+        } catch (err) {
+          console.error('Failed to query history events', err)
+        }
+      }
+
+      // 调用合约方法
+      async function callContractMethod() {
+        try {
+          if (!contractWithSigner || !contractAddress)
+            throw new Error('Please connect wallet and set contract address')
+          const name = $('input-name').value
+          const ageStr = $('input-age').value
+          if (!name || !ageStr) {
+            $('write-result').innerText = 'Please input name and age'
+            return
+          }
+          const age = BigInt(ageStr)
+          const tx = await contractWithSigner.setInfo(name, age)
+          $('write-result').innerText = `Submitting tx: ${tx.hash}`
+          const receipt = await tx.wait()
+          $('write-result').innerText =
+            `Confirmed in block ${receipt.blockNumber}`
+        } catch (err) {
+          console.error(err)
+          $('write-result').innerText = 'Failed to call setInfo'
+        }
+      }
+
+      async function getInfo() {
+        try {
+          if (!contract || !contractAddress)
+            throw new Error('Please connect wallet and set contract address')
+          const [name, age] = await contract.getInfo()
+          $('read-result').innerText = `name=${name}, age=${age}`
+        } catch (err) {
+          console.error(err)
+          $('read-result').innerText = 'Failed to get info'
+        }
+      }
+
+      async function sayHi() {
+        try {
+          if (!contract) throw new Error('Please connect wallet first')
+          const msg = await contract.sayHi()
+          $('write-result').innerText = `sayHi(): ${msg}`
+        } catch (err) {
+          console.error(err)
+          $('write-result').innerText = 'Failed to call sayHi'
+        }
+      }
+
+      // Bind UI
+      $('btn-connect').addEventListener('click', connectWallet)
+      $('btn-get-info').addEventListener('click', getInfo)
+      $('btn-set-info').addEventListener('click', callContractMethod)
+      $('btn-query-events').addEventListener('click', queryHistoryEvents)
+      $('btn-say-hi').addEventListener('click', sayHi)
+
+      // Allow user to set contract address manually when artifact lacks networks
+      $('btn-set-contract').addEventListener('click', async () => {
+        try {
+          const addr = $('input-contract').value.trim()
+          if (!isAddressCompat(addr)) {
+            $('wallet-info').innerText = 'Invalid contract address'
+            return
+          }
+          contractAddress = addr
+          if (!provider) return
+          // (Re)create instances now that we have an address
+          contract = new ethers.Contract(contractAddress, contractABI, provider)
+          contractWithSigner = signer ? contract.connect(signer) : undefined
+          await updateWalletInfo()
+        } catch (e) {
+          console.error(e)
+        }
+      })
+    </script>
+  </body>
+</html>

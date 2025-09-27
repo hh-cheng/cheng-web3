@@ -1,0 +1,23 @@
+{
+  "name": "04-hello-dapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "truffle compile",
+    "migrate:ganache": "truffle migrate --network development",
+    "dev": "serve ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1",
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "ganache": "^7.9.2",
+    "truffle": "^5.11.5"
+  }
+}
