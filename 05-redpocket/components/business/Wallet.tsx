@@ -5,15 +5,8 @@ import { formatAddress } from '@lib/utils'
 import { Button } from '@/components/ui/button'
 
 export default function Wallet() {
-  const {
-    signer,
-    account,
-    chainId,
-    provider,
-    isConnected,
-    connectWallet,
-    disconnectWallet,
-  } = useWallet()
+  const { account, chainId, isConnected, connectWallet, disconnectWallet } =
+    useWallet()
 
   const getNetwork = (chainID: number | null) => {
     if (!chainID) return '未知网络'
