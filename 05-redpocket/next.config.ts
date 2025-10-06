@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  strictMode: false,
+  env: { NEXT_PUBLIC_CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS },
+}
 
-export default nextConfig;
+export default nextConfig
