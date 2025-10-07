@@ -1,0 +1,34 @@
+{
+  "pages": {
+    "/page": [
+      "static/chunks/89262_next_dist_55e7d6fd._.js",
+      "static/chunks/app_favicon_ico_mjs_cef5d696._.js",
+      "static/chunks/[root-of-the-server]__28bc9c2a._.css",
+      "static/chunks/node_modules__pnpm_87d2dde7._.js",
+      "static/chunks/components_ui_sonner_tsx_f4d78232._.js",
+      "static/chunks/app_layout_tsx_d0cb0bb7._.js",
+      "static/chunks/89262_next_dist_client_components_builtin_global-error_f2a22e86.js",
+      "static/chunks/ddc80_ethers_lib_esm_utils_0d9eb4c8._.js",
+      "static/chunks/ddc80_ethers_lib_esm_abi_2120d929._.js",
+      "static/chunks/ddc80_ethers_lib_esm_transaction_a4026fcd._.js",
+      "static/chunks/ddc80_ethers_lib_esm_providers_4cafaaae._.js",
+      "static/chunks/ddc80_ethers_lib_esm_wallet_2f3f89ff._.js",
+      "static/chunks/ddc80_ethers_lib_esm_9deac3b3._.js",
+      "static/chunks/86fe9_@noble_curves_esm_13b9c42a._.js",
+      "static/chunks/0894d_tailwind-merge_dist_bundle-mjs_mjs_705de4d7._.js",
+      "static/chunks/e68d8_@radix-ui_react-select_dist_index_mjs_e9377de7._.js",
+      "static/chunks/node_modules__pnpm_b71ef5bf._.js",
+      "static/chunks/_a1a07ffd._.js",
+      "static/chunks/app_page_tsx_f2a22e86._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_5d8d2aaa._.js",
+      "static/chunks/89262_next_dist_compiled_react-dom_c7e9a353._.js",
+      "static/chunks/89262_next_dist_compiled_next-devtools_index_be0c79a7.js",
+      "static/chunks/89262_next_dist_compiled_0c854afd._.js",
+      "static/chunks/89262_next_dist_client_287392e5._.js",
+      "static/chunks/89262_next_dist_31b9f3c0._.js",
+      "static/chunks/69652_@swc_helpers_cjs_77b72907._.js",
+      "static/chunks/_a0ff3932._.js",
+      "static/chunks/turbopack-_6f4d2289._.js"
+    ]
+  }
+}
