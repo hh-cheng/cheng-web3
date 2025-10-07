@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+pragma solidity >=0.8.0;
 
 contract RedPocket {
   address payable public provider; // 主体
@@ -19,7 +19,6 @@ contract RedPocket {
   event RedPocketRefunded(uint256 amount);
 
   constructor(uint256 _count, bool _isEqual) payable {
-    require(msg.value > 0, "amount must be greater than 0");
     count = _count;
     isEqual = _isEqual;
     claimedCount = 0;
@@ -66,7 +65,9 @@ contract RedPocket {
       uint256 maxAmount = (remainingAmount / (count - claimedCount)) * 2;
 
       // 简单的随机数生成
-      amount = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, msg.sender))) % maxAmount;
+      // amount = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, msg.sender))) % maxAmount;
+      uint256 futureBlock = block.number + 1;
+      amount = uint256(blockhash(futureBlock)) % maxAmount;
 
       if (amount == 0) {
         amount = 1 wei;
